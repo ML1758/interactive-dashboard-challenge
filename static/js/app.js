@@ -1,6 +1,6 @@
-
- // ======================
- // do the drop down. get the length of the array, the loop throufg adding each id to the option list.
+ // ==================================================================================================
+ // do the drop down. get the length of the array, then loop through adding each id to the option list.
+ // initialise charts with data from first id
 
 d3.json("samples.json").then((data) => {
 
@@ -12,36 +12,52 @@ d3.json("samples.json").then((data) => {
         idOption.text = data.names[i];      
         idOption.value = data.names[i];        
         idDropdown.add(idOption);      
-
     }
+
+    // initialise the page by displaying first id data
+    var firstId = data.names[0];
+    //console.log(firstId)
+
+    // convert text value to a number
+    var enteredIdnum = parseInt(firstId) ;
+
+    displayBarchart(firstId);
+    displayMetadata(enteredIdnum);  
+    displayBubblechart(firstId);
+    displayGaugechart (enteredIdnum);
 });
 
 
 // Call updatePlotly() when a change takes place to the DOM
 d3.selectAll("#selDataset").on("change", updatePlotly);
 
+// =====================================================================
+// refresh page
 function updatePlotly() {
-  // Use D3 to select the dropdown menu
-  var dropdownMenu = d3.select("#selDataset");
-  // Assign the value of the dropdown menu option to a variable
-  var enteredId = dropdownMenu.property("value");
-  console.log(enteredId)
 
-//  convert text value to a number
+    // Use D3 to select the dropdown menu
+    var dropdownMenu = d3.select("#selDataset");
 
-    var enteredIdnum = `${enteredId}` ;
-    console.log(enteredIdnum);
+    // Assign the value of the dropdown menu option to a variable
+    var enteredId = dropdownMenu.property("value");
+    //console.log(enteredId)
+
+    // convert text value to a number
+    var enteredIdnum = parseInt(enteredId);
 
     displayBarchart(enteredId);
-    displayMetadata(940);
+    displayMetadata(enteredIdnum);   
     displayBubblechart(enteredId);
+    displayGaugechart (enteredIdnum);
 }
 
-
+// test code without the drop down
 // displayBarchart("940");
 // displayMetadata(940);
 // displayBubblechart("940");
 
+// =====================================================================
+// Demographic information
 function displayMetadata (enteredId) {
 
     d3.json("samples.json").then((data) => {
@@ -60,8 +76,54 @@ function displayMetadata (enteredId) {
             demographicPane.append("h5").text(`${key.toUpperCase()}: ${value}`);
         });
     });
-}
+};
 
+
+// =====================================================================
+// Horizonetal Bar chart
+function displayBarchart(enteredId) {
+
+    d3.json("samples.json").then((data) => {
+
+        var sampleData = data.samples.filter(i => i.id === enteredId);
+        //console.log(filterData);
+
+        var filteredOtus = sampleData[0];
+        //console.log(filteredOtus);
+
+        var otuIdsSliced = filteredOtus.otu_ids.slice(0,10);
+        //console.log(otuIdsSliced);
+
+        var otuLablesSliced = filteredOtus.otu_labels.slice(0,10);
+        //console.log(otuLablesSliced);
+
+        var sampleValuesSliced = filteredOtus.sample_values.slice(0,10);
+        //console.log(sampleValuesSliced);
+
+        // create a trace with horizonetal orientation
+        var traceBar = {
+            x: sampleValuesSliced.reverse(),
+            y: otuIdsSliced.map( id => "OTU " + id).reverse(),
+            text: otuLablesSliced.reverse(),
+            type: "bar",
+            orientation: "h"
+        };
+
+        var layoutBar = {
+            title: "Top 10 Bacteria Cultures Found",
+            height: 500
+        };
+
+        var data = [traceBar];
+
+        // plot the bar chart
+        Plotly.newPlot("bar", data, layoutBar);
+    });
+
+};
+
+// =====================================================================
+// Bubble chart with colour scaling
 function displayBubblechart (enteredId) {
     d3.json("samples.json").then((data) => {
 
@@ -69,16 +131,16 @@ function displayBubblechart (enteredId) {
         //console.log(filterData);
 
         var filteredOtus = sampleData[0];
-        //console.log(result);
+        //console.log(filteredOtus);
 
         var otuIds = filteredOtus.otu_ids;
-        //console.log(otuIdsSliced);
+        //console.log(otuIds);
 
         var otuLables = filteredOtus.otu_labels;
-        //console.log(otuLablesSliced);
+        //console.log(otuLables);
 
         var sampleValues = filteredOtus.sample_values;
-        //console.log(sampleValuesSliced);
+        //console.log(sampleValues);
 
         var traceBubble = {
             x: otuIds,
@@ -88,100 +150,80 @@ function displayBubblechart (enteredId) {
             marker: {
                 type: "heatmap",
                 size: sampleValues,
-                color: otuIds
+                color: otuIds,
+                colorscale: "Earth"
             },
         };
 
         var layoutBubble = {
-            title: "All Bacteria Cultures Found",
+            title: "Bacteria Cultures Per Sample",
             xaxis: {title: "OTU ID"},
             hovermode: "closest",
             height: 600,
             width: 1200
-        }
+        };
 
         var data = [traceBubble];
-
+        
+        // plot the bubble chart
         Plotly.newPlot("bubble", data, layoutBubble);
-
     });
-
 };
 
 
-function displayBarchart(enteredId) {
+
+// =====================================================================
+// Gauge chart with colour scaling
+function displayGaugechart (enteredId) {
 
     d3.json("samples.json").then((data) => {
+        var metaData = data.metadata.filter(i => i.id === enteredId);
+        //console.log(filterMetadata);
 
+        var filteredMetadata = metaData[0];
+        //console.log(filteredMetadata); 
+
+        var washFrequency = filteredMetadata.wfreq;
+        console.log(washFrequency);
+
+        var traceGauge = {
+                domain: { x: [0, 1], y: [0, 1] },
+                value: washFrequency,
+                title: { text: "<b>Belly Button Washing Frequency</b> <br> Scrubs per week </br>" },
+                type: "indicator",
+                mode: "gauge",
+                gauge: {
+                    axis: { range: [0, 9], dtick: 1 },
+                    steps: [
+                      { range: [0, 1], color: "#BAF3FC" },
+                      { range: [1, 2], color: "#A2DBE6" },
+                      { range: [2, 3], color: "#86D1DE" },
+                      { range: [3, 4], color: "#6AC6D7" },
+                      { range: [4, 5], color: "#4DBBCF" },
+                      { range: [5, 6], color: "#34AEC5" },
+                      { range: [6, 7], color: "#2D95A8" },
+                      { range: [7, 8], color: "#257C8C" },
+                      { range: [8, 9], color: "#1E6370" }                                                                                                                                                
+                    ],
+                    threshold: {
+                        line: { color: "purple", width: 5 },
+                        thickness: 0.75,
+                        value: washFrequency
+                    }    
+                }
+        };
+                
+        var layoutGauge = { 
+            width: 600, 
+            height: 500,
+            margin: { t: 0, b: 0 }
+        };
         
-        //console.log(data);
-        //console.log(data.names.length);
-        //console.log(data.names[1]);
-        //console.log(data.metadata);
-        //console.log(data.samples);
+        var data = [traceGauge];
 
-        //var ethnicity = data.metadata.map(({ ethnicity }) => ethnicity);
-
-
-        //var id = data.samples.map(({ id }) => id);
-        //var otu_ids = data.samples.map(({ otu_ids }) => otu_ids);
-
-        //var ids = data.samples.map(s => s.otu_ids[0] );
-        //var ids_sliced = ids.slice(0,10) ;
-
-        //var values = data.samples.map(s => s.sample_values[0] );
-        //console.log(values);
-        //var values_sliced = values.slice(0,10) ;
-
-        //console.log(ethnicity);
-        //console.log(id[0]);
-        //console.log(otu_ids[0]);
-        //console.log(ids);
-        //console.log(ids_sliced);
-        //console.log(values_sliced);
-        //console.log(values[0]);
-
-        //var filtersamples = data.samples.filter(filterdata);
-        //console.log(filtersamples);
-
-        //var otu_ids
-
-  
-
-        // ==================================================================================
-        var filterData = data.samples.filter(i => i.id === enteredId);
-        //console.log(filterData);
-
-        var result = filterData[0];
-        //console.log(result);
-
-        var otuIdsSliced = result.otu_ids.slice(0,10);
-        console.log(otuIdsSliced);
-
-        var otuLablesSliced = result.otu_labels.slice(0,10);
-        //console.log(otuLablesSliced);
-
-        var sampleValuesSliced = result.sample_values.slice(0,10);
-        //console.log(sampleValuesSliced);
-
-        var traceBar = {
-            x: sampleValuesSliced.reverse(),
-            y: otuIdsSliced.map( id => "OTU " + id).reverse(),
-            text: otuLablesSliced.reverse(),
-            type: "bar",
-            orientation: "h"
-        }
-
-        var layoutBar = {
-            title: "Top 10 Bacteria Cultures Found",
-            height: 500
-        }
-
-        var data = [traceBar];
-
-
-        Plotly.newPlot("bar", data, layoutBar);
+        Plotly.newPlot("gauge", data, layoutGauge);
 
     });
+
 
 };
