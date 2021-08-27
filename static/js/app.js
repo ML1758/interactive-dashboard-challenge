@@ -4,11 +4,15 @@
 
 d3.json("samples.json").then((data) => {
 
+    // get the number of Ids  
     var nameLength = data.names.length
-    let idDropdown = document.getElementById('selDataset'); 
 
+    // get the haddle of the drop down
+    let idDropdown = document.getElementById("selDataset"); 
+
+    // loop through the list of Ids and add each one to the dropdown list
     for (var i = 0; i < nameLength; i++) {      
-        let idOption = document.createElement('option');          
+        let idOption = document.createElement("option");          
         idOption.text = data.names[i];      
         idOption.value = data.names[i];        
         idDropdown.add(idOption);      
@@ -26,10 +30,6 @@ d3.json("samples.json").then((data) => {
     displayBubblechart(firstId);
     displayGaugechart (enteredIdnum);
 });
-
-
-// Call updatePlotly() when a change takes place to the DOM
-d3.selectAll("#selDataset").on("change", updatePlotly);
 
 // =====================================================================
 // refresh page
@@ -50,11 +50,6 @@ function updatePlotly() {
     displayBubblechart(enteredId);
     displayGaugechart (enteredIdnum);
 }
-
-// test code without the drop down
-// displayBarchart("940");
-// displayMetadata(940);
-// displayBubblechart("940");
 
 // =====================================================================
 // Demographic information
@@ -110,7 +105,7 @@ function displayBarchart(enteredId) {
         };
 
         var layoutBar = {
-            title: "Top 10 Bacteria Cultures Found",
+            title: "<b>Top 10 Bacteria Cultures Found</b>",
             height: 500
         };
 
@@ -156,7 +151,7 @@ function displayBubblechart (enteredId) {
         };
 
         var layoutBubble = {
-            title: "Bacteria Cultures Per Sample",
+            title: "<b>Bacteria Cultures Per Sample</b>",
             xaxis: {title: "OTU ID"},
             hovermode: "closest",
             height: 600,
@@ -184,7 +179,7 @@ function displayGaugechart (enteredId) {
         //console.log(filteredMetadata); 
 
         var washFrequency = filteredMetadata.wfreq;
-        console.log(washFrequency);
+        //console.log(washFrequency);
 
         var traceGauge = {
                 domain: { x: [0, 1], y: [0, 1] },
